@@ -15,6 +15,8 @@ public class ResultDto {
 
     public Boolean result;
 
+    public ResultDto() {
+    }
 
     public ResultDto(Boolean status) {
         this.status = status;

@@ -1,9 +1,15 @@
 package uz.atm.service;
 
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import uz.atm.dto.dto.ResultDto;
+import uz.atm.entity.Result;
+import uz.atm.exception.CustomNotFoundException;
+import uz.atm.exception.messages.ApiMessages;
 import uz.atm.repository.ResultRepository;
+
+import java.util.List;
 
 /**
  * Author: Shoxruh Bekpulatov
@@ -18,9 +24,13 @@ public class ResultService {
         this.resultRepository = resultRepository;
     }
 
-    public Mono<ResultDto> checkPinfls(String f, String s) {
+    public Mono<Result> checkPinfls(String f, String s) {
         return resultRepository.findByBasePinflAndCheckPinfl(f, s)
-                .map(m -> new ResultDto(m.getBasePinfl(), m.getCheckPinfl(), m.getResult()))
-                .switchIfEmpty(Mono.just(new ResultDto(false)));
+                .switchIfEmpty(Mono.error(new CustomNotFoundException(ApiMessages.NOT_FOUND)));
+    }
+
+    public Flux<Result> checkPinfls(String f, List<String> s) {
+        return resultRepository.findAllByBasePinflAndCheckPinflIsIn(f, s)
+                .switchIfEmpty(Mono.error(new CustomNotFoundException(ApiMessages.NOT_FOUND)));
     }
 }

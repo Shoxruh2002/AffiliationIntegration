@@ -19,4 +19,6 @@ public class ApiMessages {
     public static final String ACCESS_DENIED = "This resource is forbidden for this credentials! ";
     public static final String UNAUTHORIZED = "Please login first in order to access the resource! ";
     public static final String ERROR_WHILE_CALLING_JUSTICE = "Error Occurred while calling Justice API ";
+    public static final String SERVICE_UNAVAILABLE = "Third Party service is unavailable ";
+
 }
