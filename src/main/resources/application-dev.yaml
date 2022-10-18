@@ -1,0 +1,22 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 150MB
+      enabled: true
+      file-size-threshold: 2KB
+
+
+r2dbc:
+  driver: "postgresql"
+  host: "localhost"
+  port: 5432
+  database: "affiliation"
+  username: "postgres"
+  password: "Shoxruh0912"
+
+justice:
+  api:
+    base-url: "/nimadr"
+    api:
+      check-api: "/nimadr"
