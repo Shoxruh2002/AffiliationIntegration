@@ -1,5 +1,8 @@
 package uz.atm.dto.justice;
 
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
 import java.util.Map;
 
 /**
@@ -7,6 +10,8 @@ import java.util.Map;
  * Time: 10/18/22 11:01 AM
  **/
 
+@NoArgsConstructor
+@AllArgsConstructor
 public class JusticeResponse {
 
     public String jsonrpc;

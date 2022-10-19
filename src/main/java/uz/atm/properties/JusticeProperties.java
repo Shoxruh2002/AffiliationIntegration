@@ -2,6 +2,7 @@ package uz.atm.properties;
 
 import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -10,15 +11,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  **/
 
 @Getter
+@Setter
 @ConfigurationProperties(prefix = "justice.api")
 public class JusticeProperties {
 
     private String baseUrl;
 
-    private Api api;
+    private Apis api;
 
     @Data
-    public static class Api {
+    public static class Apis {
         private String checkApi;
     }
 
