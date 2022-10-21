@@ -11,7 +11,6 @@ import uz.atm.entity.Result;
 import uz.atm.service.caller.JusticeCaller;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -25,56 +24,109 @@ public class JusticeService {
 
     private final JusticeCaller justiceCaller;
     private final ResultService resultService;
+    private final RabbitMqService rabbitMqService;
 
-    public JusticeService(JusticeCaller justiceCaller, ResultService resultService) {
+    public JusticeService(JusticeCaller justiceCaller, ResultService resultService, RabbitMqService rabbitMqService) {
         this.justiceCaller = justiceCaller;
         this.resultService = resultService;
-    }
-
-    public Mono<List<Result>> sortList(String basepin, List<String> checkList) {
-        return resultService.checkPinfls(basepin, checkList)
-                .onErrorReturn(new ArrayList<>());
+        this.rabbitMqService = rabbitMqService;
     }
 
 
-    public Flux<EtpResultDto> sendJustice(EtpRequestDto etpRequestDto) {
-        AtomicReference<List<EtpResultDto>> resultats = new AtomicReference<>(new ArrayList<>());
-        AtomicReference<List<String>> checks = new AtomicReference<>(etpRequestDto.check);
-        return Flux.fromIterable(etpRequestDto.base)
-                .flatMap(basePin -> {
-                            AtomicReference<List<EtpResultDto>> resultList = new AtomicReference<>(new ArrayList<>());
 
-                            return Mono.just(basePin)
-                                    .flatMap(f -> this.sortList(basePin, checks.get()))
-                                    .publishOn(Schedulers.boundedElastic())
-                                    .doOnNext(d -> resultList.get()
-                                            .addAll(d.stream()
-                                                    .map(m -> new EtpResultDto(etpRequestDto.requestId, m.getBasePinfl(), m.getCheckPinfl(), m.getResult())).toList())
-                                    )
-                                    .map(m -> m.stream().map(Result::getCheckPinfl).toList())
-                                    .doOnNext(f -> checks.get().removeAll(f))
-                                    .then(Mono.just(basePin))
-                                    .flatMap(f ->
-                                            justiceCaller
-                                                    .postCall(new JusticeRequestDto(",", ",", ",", new JusticeRequestDto.Params(f, checks.get())), "qatgadr"))
-                                    .publishOn(Schedulers.boundedElastic())
-                                    .map(f -> {
-                                        AtomicReference<List<EtpResultDto>> etpResultDtos = new AtomicReference<>(new LinkedList<>());
-                                        f.result.forEach((K, V) -> {
-                                            etpResultDtos.get().add(new EtpResultDto(etpRequestDto.requestId, basePin, K, V));
-                                        });
-                                        return etpResultDtos.get();
-                                    })
-                                    .map(d -> {
-//                                        d.forEach(item -> resultList.get().add(item));
-                                        resultList.get().addAll(d);
-                                        return resultList.get();
-                                    });
-
-                        }
-                ).flatMap(m -> {
-                    resultats.get().addAll(m);
-                    return Flux.fromIterable(resultats.get());
+    public Mono<List<EtpResultDto>> sendJustice(EtpRequestDto etpRequestDto) {
+        List<String> base = etpRequestDto.base;
+        List<String> check = etpRequestDto.check;
+        List<EtpResultDto> result = new ArrayList<>();
+        return Flux.fromIterable(base)
+                .flatMap(basePinfl -> {
+                    AtomicReference<List<String>> listAtomicReference = new AtomicReference<>(check);
+                    List<EtpResultDto> tempList = new ArrayList<>();
+                    return resultService
+                            .checkPinfls(basePinfl, check)
+                            .doOnNext(f ->
+                                    f.forEach(
+                                            checkedPinfl -> {
+                                                listAtomicReference.get().remove(checkedPinfl.getCheckPinfl());
+                                                tempList.add(new EtpResultDto(etpRequestDto.requestId, basePinfl, checkedPinfl.getCheckPinfl(), checkedPinfl.getResult()));
+                                            }
+                                    ))
+                            .flatMap(m -> justiceCaller
+                                    .postCall(new JusticeRequestDto(",", ",", ",", new JusticeRequestDto.Params(basePinfl, listAtomicReference.get())), "qatgadr")
+                            )
+                            .publishOn(Schedulers.boundedElastic())
+                            .flatMap(f -> {
+                                f.result.forEach((K, V) -> {
+                                    resultService.save(new Result(etpRequestDto.requestId.toString(), basePinfl, K, V));
+                                    tempList.add(new EtpResultDto(etpRequestDto.requestId, basePinfl, K, V));
+                                });
+                                return Mono.just(tempList);
+                            });
+                })
+                .publishOn(Schedulers.boundedElastic())
+                .flatMap(etpResultDtos -> {
+                    result.addAll(etpResultDtos);
+                    return Mono.just(etpResultDtos);
+                }).collectList()
+                .flatMap(a -> {
+                    rabbitMqService.sendResult(result);
+                    return Mono.just(result);
                 });
+
     }
+
+    public Mono<List<EtpResultDto>> sendJusticeJony(EtpRequestDto etpRequestDto) {
+        List<String> base = etpRequestDto.base;
+        List<String> check = etpRequestDto.check;
+        List<EtpResultDto> result = new ArrayList<>();
+        return Flux.fromIterable(base)
+                .flatMap(basePinfl -> {
+                    ArrayList<EtpResultDto> tempList = new ArrayList<>();
+                    return justiceCaller
+                            .postCall(new JusticeRequestDto(",", ",", ",", new JusticeRequestDto.Params(basePinfl, check)), "qatgadr")
+                            .flatMap(f -> {
+                                f.result.forEach((K, V) -> {
+                                    tempList.add(new EtpResultDto(etpRequestDto.requestId, basePinfl, K, V));
+                                });
+                                return Mono.just(tempList);
+                            });
+                }).flatMap(etpResultDtos -> {
+                    result.addAll(etpResultDtos);
+                    return Mono.just(etpResultDtos);
+                }).collectList()
+                .flatMap(a -> Mono.just(result));
+
+    }
+    //
+//
+//    public Flux<EtpResultDto> sendJusticenew(EtpRequestDto etpRequestDto) {
+//        AtomicReference<List<EtpResultDto>> resultats = new AtomicReference<>(new ArrayList<>());
+//        AtomicReference<List<String>> checks = new AtomicReference<>(etpRequestDto.check);
+//        AtomicReference<String> basePinfl = new AtomicReference<>();
+//        return Flux.fromIterable(etpRequestDto.base)
+//                .flatMap(basePin -> {
+//                    basePinfl.set(basePin);
+//                    return this.sortList(basePin, checks.get());
+//                })
+//                .publishOn(Schedulers.boundedElastic())
+//                .doOnNext(d -> resultats.get()
+//                        .add(
+//                                new EtpResultDto(etpRequestDto.requestId, d.getBasePinfl(), d.getCheckPinfl(), d.getResult())))
+//                .map(Result::getCheckPinfl)
+//                .doOnNext(f -> checks.get().remove(f))
+//                .flatMap(f -> Mono.just(basePinfl.get()))
+//                .flatMap(f ->
+//                        justiceCaller
+//                                .postCall(new JusticeRequestDto(",", ",", ",", new JusticeRequestDto.Params(f, checks.get())), "qatgadr"))
+//                .publishOn(Schedulers.boundedElastic())
+//                .map(f -> {
+//                    f.result.forEach((K, V) -> {
+//                        resultats.get().add(new EtpResultDto(etpRequestDto.requestId, basePinfl.get(), K, V));
+//                        resultService.save(new Result(etpRequestDto.requestId.toString(), basePinfl.get(), K, V));
+//                    });
+//                    return resultats.get();
+//                })
+//                .flatMap(Flux::fromIterable);
+//
+//    }
 }

@@ -31,7 +31,9 @@ public class JusticeCaller {
         Map<String, Boolean> map = new HashMap<>();
         for (String s : request.params.toCheck) {
             map.put(s, true);
+            System.out.println(s);
         }
+        System.out.println(request.params.basePin);
         return Mono.just(new JusticeResponse("2.0", "123", map));
 //        return webClient.post()
 //                .uri(endpoint)

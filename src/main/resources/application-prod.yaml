@@ -1,4 +1,9 @@
 spring:
+  r2dbc:
+    driver: "postgresql"
+    username: "postgres"
+    password: "1234"
+    url: r2dbc:postgresql://localhost:5432/affiliation
   servlet:
     multipart:
       max-file-size: 100MB
@@ -6,11 +11,19 @@ spring:
       enabled: true
       file-size-threshold: 2KB
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+    groups-order: asc
+    operations-sorter: alpha
+    try-it-out-enabled: true
+    tags-sorter: alpha
+    display-request-duration: true
+  api-docs:
+    path: /api/doc
 
-r2dbc:
-  driver: "postgresql"
-  host: "localhost"
-  port: 5432
-  database: "affiliation"
-  username: "postgres"
-  password: "1234"
+justice:
+  api:
+    base-url: "/nimadr3"
+    apis:
+      check-api: "/nimadr"

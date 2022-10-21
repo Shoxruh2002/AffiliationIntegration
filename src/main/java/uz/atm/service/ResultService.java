@@ -1,12 +1,14 @@
 package uz.atm.service;
 
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import uz.atm.entity.Result;
 import uz.atm.exception.CustomNotFoundException;
 import uz.atm.exception.messages.ApiMessages;
 import uz.atm.repository.ResultRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,11 +31,12 @@ public class ResultService {
 
     public Mono<List<Result>> checkPinfls(String f, List<String> s) {
         return resultRepository.findAllByBasePinflAndCheckPinflIsIn(f, s).collectList()
-                .switchIfEmpty(Mono.error(new CustomNotFoundException(ApiMessages.NOT_FOUND)));
+                .switchIfEmpty(Mono.error(new CustomNotFoundException(ApiMessages.NOT_FOUND)))
+                .onErrorReturn(new ArrayList<>());
     }
 
 
     public void save(Result result) {
-        resultRepository.save(result).then();
+        resultRepository.save(result).subscribe();
     }
 }

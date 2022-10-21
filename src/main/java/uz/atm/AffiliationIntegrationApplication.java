@@ -14,6 +14,7 @@ import uz.atm.properties.JusticeProperties;
 @EnableConfigurationProperties(value = {
         JusticeProperties.class
 })
+
 public class AffiliationIntegrationApplication {
 
     public static void main(String[] args) {
