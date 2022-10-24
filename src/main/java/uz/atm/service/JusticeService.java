@@ -1,5 +1,6 @@
 package uz.atm.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -8,6 +9,8 @@ import uz.atm.dto.etp.EtpRequestDto;
 import uz.atm.dto.etp.EtpResultDto;
 import uz.atm.dto.justice.JusticeRequestDto;
 import uz.atm.entity.Result;
+import uz.atm.properties.JusticeAPiProperties;
+import uz.atm.properties.JusticeRequestProperties;
 import uz.atm.service.caller.JusticeCaller;
 
 import java.util.ArrayList;
@@ -20,18 +23,14 @@ import java.util.concurrent.atomic.AtomicReference;
  **/
 
 @Service
+@RequiredArgsConstructor
 public class JusticeService {
 
     private final JusticeCaller justiceCaller;
     private final ResultService resultService;
     private final RabbitMqService rabbitMqService;
-
-    public JusticeService(JusticeCaller justiceCaller, ResultService resultService, RabbitMqService rabbitMqService) {
-        this.justiceCaller = justiceCaller;
-        this.resultService = resultService;
-        this.rabbitMqService = rabbitMqService;
-    }
-
+    private final JusticeRequestProperties justiceRequestProperties;
+    private final JusticeAPiProperties justiceAPiProperties;
 
 
     public Mono<List<EtpResultDto>> sendJustice(EtpRequestDto etpRequestDto) {
@@ -52,7 +51,9 @@ public class JusticeService {
                                             }
                                     ))
                             .flatMap(m -> justiceCaller
-                                    .postCall(new JusticeRequestDto(",", ",", ",", new JusticeRequestDto.Params(basePinfl, listAtomicReference.get())), "qatgadr")
+                                    .postCall(new JusticeRequestDto(
+                                            justiceRequestProperties.getJsonRpc(), justiceRequestProperties.getId(), justiceRequestProperties.getMethod(),
+                                            new JusticeRequestDto.Params(basePinfl, listAtomicReference.get())), justiceAPiProperties.getBaseUrl() + justiceAPiProperties.getApi().getCheckApi())
                             )
                             .publishOn(Schedulers.boundedElastic())
                             .flatMap(f -> {

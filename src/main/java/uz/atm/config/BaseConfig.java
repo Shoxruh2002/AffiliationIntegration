@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
-import uz.atm.properties.JusticeProperties;
+import uz.atm.properties.JusticeAPiProperties;
 
 
 /**
@@ -15,16 +15,16 @@ import uz.atm.properties.JusticeProperties;
 
 @Configuration
 public class BaseConfig {
-    private final JusticeProperties justiceProperties;
+    private final JusticeAPiProperties justiceAPiProperties;
 
-    public BaseConfig(JusticeProperties justiceProperties) {
-        this.justiceProperties = justiceProperties;
+    public BaseConfig(JusticeAPiProperties justiceAPiProperties) {
+        this.justiceAPiProperties = justiceAPiProperties;
     }
 
     @Bean(name = "justice-web-client")
     public WebClient webClient() {
         return WebClient.builder()
-                .baseUrl(justiceProperties.getBaseUrl())
+                .baseUrl(justiceAPiProperties.getBaseUrl())
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
 //                .filter(logFilter())
                 .build();

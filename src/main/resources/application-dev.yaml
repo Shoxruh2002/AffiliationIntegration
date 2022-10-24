@@ -28,6 +28,9 @@ springdoc:
     path: /api/doc
 
 justice:
+  request:
+    json-rpc: 2.0
+    method: zags.check_family_ties_by_pins
   api:
     base-url: "/nimadr3"
     apis:

@@ -2,6 +2,7 @@ package uz.atm.dto.justice;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.List;
  **/
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class JusticeRequestDto {
 
     public String jsonrpc;
@@ -31,5 +33,10 @@ public class JusticeRequestDto {
 
         @JsonProperty("to_check")
         public List<String> toCheck;
+    }
+
+
+    public JusticeRequestDto(Params params) {
+        this.params = params;
     }
 }

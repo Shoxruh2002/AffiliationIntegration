@@ -13,7 +13,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "justice.api")
-public class JusticeProperties {
+public class JusticeAPiProperties {
 
     private String baseUrl;
 
