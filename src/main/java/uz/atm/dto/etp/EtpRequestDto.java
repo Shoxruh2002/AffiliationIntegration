@@ -8,6 +8,8 @@ import java.util.List;
  **/
 public class EtpRequestDto {
 
+    public Integer etpId;
+
     public Long requestId;
 
     public List<String> base;

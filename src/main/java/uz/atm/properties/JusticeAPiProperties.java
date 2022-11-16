@@ -17,11 +17,6 @@ public class JusticeAPiProperties {
 
     private String baseUrl;
 
-    private Apis api;
-
-    @Data
-    public static class Apis {
-        private String checkApi;
-    }
+    private String key;
 
 }

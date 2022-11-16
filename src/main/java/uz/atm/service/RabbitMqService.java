@@ -2,10 +2,12 @@ package uz.atm.service;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.context.annotation.Profile;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 import uz.atm.dto.etp.EtpResultDto;
-import uz.atm.entity.Result;
+import uz.atm.properties.RabbitMQProperties;
 
 import java.util.List;
 
@@ -18,16 +20,20 @@ public class RabbitMqService {
 
 
     private final RabbitTemplate rabbitTemplate;
+    private final JusticeService justiceService;
+    private final RabbitMQProperties rabbitMQProperties;
 
-    public RabbitMqService(RabbitTemplate rabbitTemplate) {
+    public RabbitMqService(RabbitTemplate rabbitTemplate, JusticeService justiceService, RabbitMQProperties rabbitMQProperties) {
         this.rabbitTemplate = rabbitTemplate;
+        this.justiceService = justiceService;
+        this.rabbitMQProperties = rabbitMQProperties;
     }
 
     public void send(Object message) {
         rabbitTemplate.convertAndSend("common", "push.*", message);
     }
 
-    public void sendResult(List<EtpResultDto> message) {
+    public void sendResult(List<EtpResultDto> message,Integer etpId) {
         new Thread(() -> {
             message
                     .forEach(f -> rabbitTemplate.convertAndSend("common", "push.*", f)
@@ -35,8 +41,8 @@ public class RabbitMqService {
         }).start();
     }
 
-    @RabbitListener(queues = {"cportal_ant_in"})
+    @RabbitListener(queues = {"${etp.rabbit.consumer-queue-name}"})
     public void listener(String str) {
-        System.out.println(str);
+        justiceService.consume(str);
     }
 }
